@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Belgian Papers</title>
+  <meta name="description" content="Find papers by researchers in Belgium by describing what you work on. Matching runs in your browser.">
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.19.2/dist/ort.min.js"></script>
+  <script type="module" src="app.js"></script>
+</head>
+<body>
+  <main>
+    <header>
+      <h1>Belgian Papers</h1>
+      <p class="sub">Find papers — and the people nearby who wrote them — by describing what you work on.</p>
+    </header>
+
+    <form id="search-form">
+      <label class="visually-hidden" for="query">What are you working on?</label>
+      <textarea id="query" rows="3" placeholder="What are you working on? e.g. maternal gatekeeping in divorced families"></textarea>
+
+      <div class="filters">
+        <div class="filter" id="field-filter">
+          <span class="filter-label">Field</span>
+          <button type="button" id="field-button" aria-haspopup="true" aria-expanded="false">
+            <span id="field-label">Choose…</span><span class="caret" aria-hidden="true">▾</span>
+          </button>
+          <div id="field-menu" class="menu" role="menu" hidden></div>
+        </div>
+        <div class="filter">
+          <label class="filter-label" for="city">Location</label>
+          <select id="city" disabled><option value="">All of Belgium</option></select>
+        </div>
+      </div>
+
+      <div class="actions">
+        <span class="hint">Your description stays in this browser.</span>
+        <button type="submit" id="find" class="primary" disabled>Find papers</button>
+      </div>
+    </form>
+
+    <p id="error" class="error" hidden></p>
+
+    <section id="status" class="status" hidden>
+      <div class="progress" id="progress" hidden><div id="progress-bar"></div></div>
+      <div class="spinner" id="spinner" hidden></div>
+      <p id="status-text"></p>
+    </section>
+
+    <p id="message" class="message"></p>
+    <ol id="results" class="results"></ol>
+    <div class="more"><button type="button" id="load-more" hidden>Load more</button></div>
+  </main>
+  <footer>
+    Data: <a href="https://openalex.org">OpenAlex</a> · papers with Belgian authors, last 5 years, updated nightly ·
+    <a href="https://github.com/AlexanderJVP/PapersNearMe">source</a>
+  </footer>
+</body>
+</html>

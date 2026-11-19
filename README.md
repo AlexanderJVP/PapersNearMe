@@ -21,6 +21,14 @@ OpenAlex API → Belgian papers, last 5 years,   you pick your field(s) of work
 
 No server, no database, no cost.
 
+## Web version
+
+**https://alexanderjvp.github.io/PapersNearMe/** — the same search in the browser (`web/`),
+using the same index and model via ONNX Runtime Web. Your description never leaves the browser.
+The *Deploy web app* workflow republishes the site after every nightly index run and on
+every change to `web/`. Browsers can't download GitHub release assets directly (no CORS),
+so the index files are copied into the site.
+
 ## Setup (one time)
 
 1. **Create a public GitHub repo** called `PapersNearMe` and push this folder to it
