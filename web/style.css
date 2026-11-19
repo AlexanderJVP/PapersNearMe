@@ -102,8 +102,9 @@ button:disabled { opacity: .45; cursor: default; }
 .message { color: var(--muted); margin: 24px 0; }
 .message:empty { display: none; }
 
-.results { list-style: none; padding: 0; margin: 16px 0 0; display: grid; gap: 12px; }
+.results { list-style: none; padding: 0; margin: 16px 0 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
 .card {
+  min-width: 0; overflow-wrap: anywhere;
   background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
   padding: 16px; box-shadow: var(--shadow);
 }
