@@ -46,10 +46,12 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import be.alexander.papersnearme.R
 import be.alexander.papersnearme.data.FieldInfo
 import be.alexander.papersnearme.data.Match
 
@@ -62,7 +64,7 @@ fun PapersScreen(vm: PapersViewModel) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Papers Near Me") },
+                title = { Text(stringResource(R.string.app_name)) },
                 actions = { TextButton(onClick = vm::refresh, enabled = !busy) { Text("Refresh") } },
             )
         },

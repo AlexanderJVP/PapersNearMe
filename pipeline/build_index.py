@@ -54,7 +54,7 @@ ABSTRACT_CHARS = 400   # stored for display
 EMBED_CHARS = 2000     # title + abstract fed to the model (~256 tokens)
 
 session = requests.Session()
-session.headers["User-Agent"] = f"PapersNearMe/0.2 (mailto:{MAILTO or 'unknown'})"
+session.headers["User-Agent"] = f"BelgianPapers/0.2 (mailto:{MAILTO or 'unknown'})"
 
 
 def get(path: str, params: dict) -> dict:

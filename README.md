@@ -1,4 +1,4 @@
-# Papers Near Me
+# Belgian Papers
 
 Find papers written by researchers near you (Antwerp, Ghent, Leuven…), in any field,
 by describing what *you* are working on. Matching runs on the phone, so your description

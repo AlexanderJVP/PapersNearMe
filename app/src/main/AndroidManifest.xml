@@ -10,7 +10,7 @@
         android:label="@string/app_name"
         android:icon="@android:drawable/ic_menu_search"
         android:supportsRtl="true"
-        android:theme="@style/Theme.PapersNearMe">
+        android:theme="@style/Theme.BelgianPapers">
         <activity
             android:name=".MainActivity"
             android:exported="true"
