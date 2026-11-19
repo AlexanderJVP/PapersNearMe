@@ -11,7 +11,7 @@ permissions:
 jobs:
   build-index:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 240  # first run embeds ~200k papers; later runs reuse them
     steps:
       - uses: actions/checkout@v4
 
@@ -30,11 +30,18 @@ jobs:
       - name: Install dependencies
         run: pip install -r pipeline/requirements.txt
 
+      - name: Download previous index (embedding cache)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release download index-latest -D prev -p manifest.json -p 'papers-*.jsonl.gz' -p 'vectors-*.bin' || echo "No previous index"
+
       - name: Fetch, embed and write index
         env:
           OPENALEX_MAILTO: ${{ vars.OPENALEX_MAILTO }}
           OPENALEX_API_KEY: ${{ secrets.OPENALEX_API_KEY }}
           OUT_DIR: dist
+          PREV_DIR: ../prev
         working-directory: pipeline
         run: python build_index.py && mv dist ../dist
 
@@ -45,4 +52,11 @@ jobs:
           gh release view index-latest >/dev/null 2>&1 || \
             gh release create index-latest --title "Paper index" \
               --notes "Rebuilt every night by GitHub Actions." --latest=false
-          gh release upload index-latest dist/* --clobber
+          # Field files first, manifest last, so phones never see a manifest
+          # pointing at files that are not uploaded yet.
+          gh release upload index-latest dist/papers-* dist/vectors-* dist/model.onnx dist/vocab.txt --clobber
+          gh release upload index-latest dist/manifest.json --clobber
+          # Remove files that are no longer part of the index.
+          for a in $(gh release view index-latest --json assets -q '.assets[].name'); do
+            [ -e "dist/$a" ] || gh release delete-asset index-latest "$a" -y
+          done

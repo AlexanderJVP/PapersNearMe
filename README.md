@@ -1,19 +1,22 @@
 # Papers Near Me
 
-Find machine-learning papers written by researchers near you (Antwerp, Ghent, Leuven…)
+Find papers written by researchers near you (Antwerp, Ghent, Leuven…), in any field,
 by describing what *you* are working on. Matching runs on the phone, so your description
 never leaves it.
 
 ## How it works
 
 ```
-GitHub Actions (every night, free)          Android app
-──────────────────────────────────          ─────────────────────────────────
-OpenAlex API → Belgian AI/CV papers          downloads papers.json + vectors.bin
-  → embed title+abstract (MiniLM, ONNX)      embeds your description on-device
-  → publish to release "index-latest":       (same model.onnx + vocab.txt)
-     papers.json, vectors.bin,               → cosine similarity → closest papers
-     model.onnx, vocab.txt                   → filter by city, see local authors
+GitHub Actions (every night, free)            Android app
+──────────────────────────────────            ─────────────────────────────────
+OpenAlex API → Belgian papers, last 5 years,   you pick your field(s) of work
+  all fields (~200k)                           → downloads only those fields
+  → embed title+abstract (MiniLM, ONNX),       embeds your description on-device
+    reusing last night's embeddings            (same model.onnx + vocab.txt)
+  → one file set per field, published to       → cosine similarity → closest papers
+    release "index-latest": manifest.json,     → filter by city, see local authors
+    papers-f<ID>.jsonl.gz, vectors-f<ID>.bin,
+    model.onnx, vocab.txt
 ```
 
 No server, no database, no cost.
@@ -37,12 +40,13 @@ No server, no database, no cost.
 
 Environment variables for `pipeline/build_index.py` (set them in the workflow's `env:`):
 
-| Variable     | Default      | Meaning                                              |
-|--------------|--------------|------------------------------------------------------|
-| `COUNTRY`    | `BE`         | Country of the local authors                         |
-| `SUBFIELDS`  | `1702\|1707` | OpenAlex subfields: AI, Computer Vision              |
-| `SINCE`      | `2024-01-01` | Oldest publication date                              |
-| `MAX_PAPERS` | `20000`      | Safety cap                                           |
+| Variable      | Default        | Meaning                                                  |
+|---------------|----------------|----------------------------------------------------------|
+| `COUNTRY`     | `BE`           | Country of the local authors                             |
+| `SINCE`       | 5 years ago    | Oldest publication date (`YYYY-MM-DD`)                   |
+| `SUBFIELDS`   | *(all)*        | Optional OpenAlex subfield filter, e.g. `1702\|1707`     |
+| `MAX_AUTHORS` | `30`           | Skip papers with more authors (large consortia)          |
+| `MAX_PAPERS`  | `400000`       | Safety cap                                               |
 
 ## Notes
 
@@ -50,9 +54,13 @@ Environment variables for `pipeline/build_index.py` (set them in the workflow's 
 - GitHub pauses scheduled workflows after 60 days without repo activity. Push a commit
   or click *Run workflow* now and then to keep it alive.
 - Python and phone must use the **same** model file; the pipeline publishes it, so they always match.
+- The app refreshes downloaded fields automatically only on Wi-Fi; the *Refresh* button always works.
+- The first pipeline run embeds everything (~1–2 h); later runs reuse the previous release's
+  embeddings and only embed new papers.
+- The embedding model is English-only: Dutch/French abstracts match less well.
 
 ## Next ideas
 
 - Let researchers claim their profile and describe their current work
-- Only download papers added since the last sync
+- Only download papers added since the last sync (instead of whole fields)
 - Sort by distance using the phone's location
