@@ -33,6 +33,7 @@ jobs:
       - name: Fetch, embed and write index
         env:
           OPENALEX_MAILTO: ${{ vars.OPENALEX_MAILTO }}
+          OPENALEX_API_KEY: ${{ secrets.OPENALEX_API_KEY }}
           OUT_DIR: dist
         working-directory: pipeline
         run: python build_index.py && mv dist ../dist

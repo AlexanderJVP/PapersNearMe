@@ -26,6 +26,8 @@ MODEL_FILE = "onnx/model_qint8_arm64.onnx"  # ~23 MB, runs on x86 too
 
 OUT = pathlib.Path(os.environ.get("OUT_DIR", "dist"))
 MAILTO = os.environ.get("OPENALEX_MAILTO", "").strip()
+# Optional free key (https://openalex.org/settings/api): own daily budget + cursor paging.
+API_KEY = os.environ.get("OPENALEX_API_KEY", "").strip()
 COUNTRY = os.environ.get("COUNTRY", "BE")
 # OpenAlex subfields: 1702 Artificial Intelligence, 1707 Computer Vision & Pattern Recognition
 SUBFIELDS = os.environ.get("SUBFIELDS", "1702|1707")
@@ -41,6 +43,8 @@ def get(path: str, params: dict) -> dict:
     params = dict(params)
     if MAILTO:
         params["mailto"] = MAILTO  # puts us in OpenAlex's faster "polite pool"
+    if API_KEY:
+        params["api_key"] = API_KEY
     for attempt in range(6):
         r = session.get(f"{API}{path}", params=params, timeout=60)
         if r.status_code == 200:
@@ -68,16 +72,30 @@ def fetch_works() -> list[dict]:
         "has_abstract:true",
     ])
     select = "id,doi,title,publication_year,publication_date,authorships,abstract_inverted_index"
-    works, cursor = [], "*"
-    while cursor and len(works) < MAX_PAPERS:
-        data = get("/works", {"filter": filt, "select": select, "per-page": 200,
-                              "cursor": cursor, "sort": "publication_date:desc"})
-        if cursor == "*":
-            print(f"OpenAlex reports {data['meta']['count']} matching works")
-        works.extend(data["results"])
-        cursor = data["meta"].get("next_cursor")
-        if not data["results"]:
-            break
+    base = {"filter": filt, "select": select, "per-page": 200, "sort": "publication_date:desc"}
+    works = []
+    if API_KEY:
+        # Cursor paging (needs a key) has no result limit.
+        cursor = "*"
+        while cursor and len(works) < MAX_PAPERS:
+            data = get("/works", {**base, "cursor": cursor})
+            if cursor == "*":
+                print(f"OpenAlex reports {data['meta']['count']} matching works")
+            works.extend(data["results"])
+            cursor = data["meta"].get("next_cursor")
+            if not data["results"]:
+                break
+    else:
+        # Without a key only basic paging is allowed: max 10,000 results (50 pages of 200).
+        page = 1
+        while len(works) < min(MAX_PAPERS, 10_000):
+            data = get("/works", {**base, "page": page})
+            if page == 1:
+                print(f"OpenAlex reports {data['meta']['count']} matching works")
+            works.extend(data["results"])
+            if len(data["results"]) < 200:
+                break
+            page += 1
     return works[:MAX_PAPERS]
 
 

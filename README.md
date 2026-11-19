@@ -25,6 +25,9 @@ No server, no database, no cost.
 2. **Add your email for OpenAlex** (optional, but gives faster API access):
    repo *Settings → Secrets and variables → Actions → Variables* → new variable
    `OPENALEX_MAILTO` = your email.
+   Optionally also add a free OpenAlex API key (https://openalex.org/settings/api) as a
+   repository *secret* `OPENALEX_API_KEY`: it gives the job its own daily budget
+   (without it, results are limited to 10,000 papers).
 3. **Run the pipeline once by hand**: *Actions → Nightly paper index → Run workflow*.
    After a few minutes a release called `index-latest` appears with 4 files.
 4. **Point the app at it**: in `gradle.properties`, replace `YOUR_GITHUB_USERNAME`.
