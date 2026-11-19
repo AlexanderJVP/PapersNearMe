@@ -115,6 +115,10 @@ class IndexRepository(private val context: Context, private val baseUrl: String 
                 conn.disconnect(); redirects++
                 continue
             }
+            if (code == 404) throw IllegalStateException(
+                "The paper index ($name) isn't published yet. If the GitHub Action is still " +
+                    "running, wait until it finishes and tap Refresh."
+            )
             if (code != 200) throw IllegalStateException("HTTP $code for $name")
             break
         }
