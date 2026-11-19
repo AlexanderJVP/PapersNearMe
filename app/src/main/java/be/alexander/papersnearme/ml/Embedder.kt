@@ -36,9 +36,9 @@ class Embedder(modelFile: File, vocabFile: File) : AutoCloseable {
                 val v = FloatArray(dim)
                 for (token in hidden) for (i in 0 until dim) v[i] += token[i]
                 var norm = 0f
-                for (i in 0 until dim) { v[i] /= n; norm += v[i] * v[i] }
+                for (i in 0 until dim) { v[i] = v[i] / n.toFloat(); norm += v[i] * v[i] }
                 val len = sqrt(norm).coerceAtLeast(1e-12f)
-                for (i in 0 until dim) v[i] /= len
+                for (i in 0 until dim) v[i] = v[i] / len
                 return v
             }
         } finally {
