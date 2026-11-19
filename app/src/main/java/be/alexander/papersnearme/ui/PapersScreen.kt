@@ -6,17 +6,21 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -24,8 +28,8 @@ import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -44,6 +48,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringResource
@@ -151,6 +156,47 @@ fun PapersScreen(vm: PapersViewModel) {
     }
 }
 
+/**
+ * A read-only text field that opens a [DropdownMenu] when tapped. A transparent overlay
+ * takes the tap, because a read-only text field would otherwise just take focus.
+ */
+@Composable
+private fun DropdownField(
+    label: String,
+    value: String,
+    enabled: Boolean,
+    expanded: Boolean,
+    onExpandedChange: (Boolean) -> Unit,
+    modifier: Modifier = Modifier,
+    menu: @Composable ColumnScope.() -> Unit,
+) {
+    Box(modifier) {
+        OutlinedTextField(
+            value = value,
+            onValueChange = {},
+            readOnly = true,
+            singleLine = true,
+            enabled = enabled,
+            label = { Text(label) },
+            trailingIcon = {
+                Icon(Icons.Filled.ArrowDropDown, contentDescription = null, modifier = Modifier.rotate(if (expanded) 180f else 0f))
+            },
+            modifier = Modifier.fillMaxWidth(),
+        )
+        Box(
+            Modifier
+                .matchParentSize()
+                .clickable(enabled = enabled) { onExpandedChange(true) }
+        )
+        DropdownMenu(
+            expanded = expanded && enabled,
+            onDismissRequest = { onExpandedChange(false) },
+            modifier = Modifier.heightIn(max = 420.dp),
+            content = menu,
+        )
+    }
+}
+
 @Composable
 private fun FieldDropdown(
     fields: List<FieldInfo>,
@@ -166,36 +212,26 @@ private fun FieldDropdown(
         1 -> names[0]
         else -> "${names.size} fields"
     }
-    ExposedDropdownMenuBox(expanded = expanded && enabled, onExpandedChange = { if (enabled) expanded = it },
-        modifier = modifier) {
-        OutlinedTextField(
-            value = label,
-            onValueChange = {},
-            readOnly = true,
-            singleLine = true,
-            enabled = enabled,
-            label = { Text("Field") },
-            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-            modifier = Modifier.menuAnchor().fillMaxWidth(),
-        )
-        ExposedDropdownMenu(expanded = expanded && enabled, onDismissRequest = { expanded = false }) {
-            fields.forEach { f ->
-                DropdownMenuItem(
-                    leadingIcon = { Checkbox(checked = f.id in selected, onCheckedChange = null) },
-                    text = {
-                        Column {
-                            Text(f.name)
-                            Text(
-                                "${"%,d".format(f.count)} papers · ${"%.0f".format(f.bytes / 1e6)} MB",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                        }
-                    },
-                    // Adding a field downloads it, so close the menu to show the progress.
-                    onClick = { onToggle(f.id); if (f.id !in selected) expanded = false },
-                )
-            }
+    DropdownField("Field", label, enabled, expanded, { expanded = it }, modifier) {
+        if (fields.isEmpty()) {
+            DropdownMenuItem(text = { Text("No fields yet — tap Refresh") }, onClick = { expanded = false })
+        }
+        fields.forEach { f ->
+            DropdownMenuItem(
+                leadingIcon = { Checkbox(checked = f.id in selected, onCheckedChange = null) },
+                text = {
+                    Column {
+                        Text(f.name)
+                        Text(
+                            "${"%,d".format(f.count)} papers · ${"%.0f".format(f.bytes / 1e6)} MB",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                },
+                // Adding a field downloads it, so close the menu to show the progress.
+                onClick = { onToggle(f.id); if (f.id !in selected) expanded = false },
+            )
         }
     }
 }
@@ -209,31 +245,18 @@ private fun CityDropdown(
     modifier: Modifier = Modifier,
 ) {
     var expanded by remember { mutableStateOf(false) }
-    ExposedDropdownMenuBox(expanded = expanded && enabled, onExpandedChange = { if (enabled) expanded = it },
-        modifier = modifier) {
-        OutlinedTextField(
-            value = selected ?: "All of Belgium",
-            onValueChange = {},
-            readOnly = true,
-            singleLine = true,
-            enabled = enabled,
-            label = { Text("Location") },
-            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-            modifier = Modifier.menuAnchor().fillMaxWidth(),
+    DropdownField("Location", selected ?: "All of Belgium", enabled, expanded, { expanded = it }, modifier) {
+        DropdownMenuItem(
+            leadingIcon = { RadioButton(selected = selected == null, onClick = null) },
+            text = { Text("All of Belgium") },
+            onClick = { onSelect(null); expanded = false },
         )
-        ExposedDropdownMenu(expanded = expanded && enabled, onDismissRequest = { expanded = false }) {
+        cities.forEach { c ->
             DropdownMenuItem(
-                leadingIcon = { RadioButton(selected = selected == null, onClick = null) },
-                text = { Text("All of Belgium") },
-                onClick = { onSelect(null); expanded = false },
+                leadingIcon = { RadioButton(selected = selected == c.name, onClick = null) },
+                text = { Text("${c.name} (${"%,d".format(c.count)})") },
+                onClick = { onSelect(c.name); expanded = false },
             )
-            cities.forEach { c ->
-                DropdownMenuItem(
-                    leadingIcon = { RadioButton(selected = selected == c.name, onClick = null) },
-                    text = { Text("${c.name} (${"%,d".format(c.count)})") },
-                    onClick = { onSelect(c.name); expanded = false },
-                )
-            }
         }
     }
 }
